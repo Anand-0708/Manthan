@@ -1,15 +1,17 @@
 import { Router } from "express";
 import healthRoutes from "./health.routes";
+import authRoutes from "../modules/auth/auth.routes";
 
 const router = Router();
 
 /**
  * All API routes are versioned under /api/v1.
  *
- * Business module routers (auth, users, conferences, papers, reviews,
+ * Remaining business module routers (users, conferences, papers, reviews,
  * decisions, notifications, files, audit) will be mounted here in later
- * phases. Phase 0 only exposes the health check.
+ * phases.
  */
 router.use(healthRoutes);
+router.use("/auth", authRoutes);
 
 export default router;
