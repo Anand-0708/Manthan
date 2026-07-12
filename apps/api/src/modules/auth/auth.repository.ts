@@ -1,4 +1,4 @@
-import type {AuditAction, User, Prisma } from "@prisma/client";
+import type { AuditAction, User, Prisma} from "@prisma/client";
 import { prisma } from "../../config/database";
 
 export interface CreateUserInput {
@@ -30,6 +30,10 @@ export const authRepository = {
     return prisma.user.findUnique({ where: { email } });
   },
 
+  findUserByGoogleId(googleId: string): Promise<User | null> {
+    return prisma.user.findUnique({ where: { googleId } });
+  },
+
   findUserById(id: string): Promise<User | null> {
     return prisma.user.findUnique({ where: { id } });
   },
@@ -42,6 +46,25 @@ export const authRepository = {
         name: input.name,
         affiliation: input.affiliation,
       },
+    });
+  },
+
+  /** Creates a user with no password — Google OAuth is their only login method. */
+  createOAuthUser(input: { email: string; googleId: string; name: string }): Promise<User> {
+    return prisma.user.create({
+      data: {
+        email: input.email,
+        googleId: input.googleId,
+        name: input.name,
+      },
+    });
+  },
+
+  /** Links a Google account to an existing email+password account. */
+  linkGoogleAccount(userId: string, googleId: string): Promise<User> {
+    return prisma.user.update({
+      where: { id: userId },
+      data: { googleId },
     });
   },
 

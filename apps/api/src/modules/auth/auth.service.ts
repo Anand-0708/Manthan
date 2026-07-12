@@ -6,7 +6,7 @@ import { hashPassword, verifyPassword } from "../../common/utils/password";
 import { generateRefreshToken, signAccessToken } from "../../common/utils/jwt";
 import { sha256 } from "../../common/utils/tokenHash";
 import { authRepository } from "./auth.repository";
-import { toSafeUser, type SafeUser } from "./auth.types";
+import { toSafeUser, type GoogleProfileInput, type SafeUser } from "./auth.types";
 import type { LoginInput, RegisterInput } from "./auth.validators";
 
 export interface AuthResult {
@@ -205,5 +205,41 @@ export const authService = {
       throw new AppError(404, "USER_NOT_FOUND", "User not found.");
     }
     return toSafeUser(user);
+  },
+
+  /**
+   * Handles the three possible outcomes of a Google OAuth callback:
+   * 1. This Google account has signed in before -> log them in.
+   * 2. No Google link yet, but the email matches an existing
+   *    email+password account -> link the accounts (audit OAUTH_LINKED)
+   *    so the person can use either method going forward.
+   * 3. Brand new person -> create an OAuth-only account (no password).
+   */
+  async loginWithGoogle(profile: GoogleProfileInput): Promise<AuthResult> {
+    let user = await authRepository.findUserByGoogleId(profile.googleId);
+
+    if (!user) {
+      const existingByEmail = await authRepository.findUserByEmail(profile.email);
+
+      if (existingByEmail) {
+        user = await authRepository.linkGoogleAccount(existingByEmail.id, profile.googleId);
+        await authRepository.createAuditLog({ actorId: user.id, action: "OAUTH_LINKED" });
+      } else {
+        user = await authRepository.createOAuthUser({
+          email: profile.email,
+          googleId: profile.googleId,
+          name: profile.name,
+        });
+      }
+    }
+
+    await authRepository.createAuditLog({
+      actorId: user.id,
+      action: "LOGIN_SUCCESS",
+      metadata: { method: "google" },
+    });
+
+    const tokens = await issueTokens(user.id);
+    return { user: toSafeUser(user), ...tokens };
   },
 };

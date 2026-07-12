@@ -12,6 +12,15 @@ export interface SafeUser {
   createdAt: Date;
 }
 
+/**
+ * Normalized Google profile data used internally by the auth service.
+ */
+export interface GoogleProfileInput {
+  googleId: string;
+  email: string;
+  name: string;
+}
+
 export function toSafeUser(user: User): SafeUser {
   return {
     id: user.id,
