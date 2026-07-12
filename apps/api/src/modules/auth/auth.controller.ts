@@ -9,7 +9,7 @@ import type { LoginInput, RegisterInput } from "./auth.validators";
 
 export const authController = {
   csrfToken(req: Request, res: Response): void {
-    const token = issueCsrfToken(req, res);
+    const token = issueCsrfToken();
     sendSuccess(res, { csrfToken: token });
   },
 
