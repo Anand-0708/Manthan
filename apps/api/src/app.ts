@@ -4,9 +4,13 @@ import cors from "cors";
 import express, { type Express } from "express";
 import helmet from "helmet";
 import pinoHttp from "pino-http";
+
 import { env } from "./config/env";
+
 import { errorHandlerMiddleware, notFoundMiddleware } from "./common/middleware/errorHandler.middleware";
 import { requestIdMiddleware } from "./common/middleware/requestId.middleware";
+import { globalRateLimiter } from "./common/middleware/rateLimiter.middleware";
+
 import { logger } from "./common/utils/logger";
 import routes from "./routes";
 
@@ -19,15 +23,16 @@ import routes from "./routes";
  *
  * Middleware order matters:
  * 1. requestId       — every subsequent log line needs req.requestId/req.log
- * 2. pino-http        — HTTP access logging, uses req.log set by requestId mw
- * 3. helmet           — security headers
- * 4. cors             — cross-origin rules
- * 5. compression      — gzip responses
- * 6. body parsers     — JSON/urlencoded, with size limits
- * 7. cookie-parser    — reads cookies (needed once auth lands)
- * 8. routes
- * 9. notFound         — catches unmatched routes
- * 10. errorHandler    — must be last
+ * 2. pino-http       — HTTP access logging
+ * 3. helmet          — security headers
+ * 4. cors            — cross-origin rules
+ * 5. rate limiter    — abuse protection
+ * 6. compression     — gzip responses
+ * 7. body parsers    — JSON/urlencoded
+ * 8. cookie-parser   — reads cookies
+ * 9. routes
+ * 10. notFound
+ * 11. errorHandler
  */
 export function createApp(): Express {
   const app = express();
@@ -56,6 +61,9 @@ export function createApp(): Express {
       credentials: true,
     })
   );
+
+  // Global API protection
+  app.use(globalRateLimiter);
 
   app.use(compression());
 

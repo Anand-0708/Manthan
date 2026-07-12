@@ -32,6 +32,9 @@ const envSchema = z.object({
   // staging/production.
   COOKIE_SECURE: z.coerce.boolean().default(false),
 
+  // --- CSRF ---
+  CSRF_SECRET: z.string().min(32, "CSRF_SECRET must be at least 32 characters"),
+
   // --- Auth: Google OAuth ---
   GOOGLE_CLIENT_ID: z.string().optional(),
   GOOGLE_CLIENT_SECRET: z.string().optional(),
