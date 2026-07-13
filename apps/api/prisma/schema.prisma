@@ -1,8 +1,3 @@
-// Manthan — Prisma schema
-// Phase 1 scope: Auth & Users only.
-// Conference/Paper/Review/Decision models are added in Phase 2+ as each
-// business module is implemented — see the development roadmap.
-
 generator client {
   provider = "prisma-client-js"
 }
@@ -12,22 +7,14 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-/// A registered user of the platform. Role (Author/Reviewer/Chair) is NOT
-/// stored here — it's contextual per-conference via ConferenceRole, added
-/// in Phase 2. A user with no conference roles yet can still authenticate
-/// and manage their profile.
 model User {
   id           String  @id @default(uuid()) @db.Uuid
   email        String  @unique
-  /// Null for users who signed up via Google OAuth only (no password set).
   passwordHash String? @map("password_hash")
-  /// Null for users who signed up with email+password only.
   googleId     String? @unique @map("google_id")
   name         String
   affiliation  String?
 
-  /// Simple brute-force protection: incremented on failed login, reset on
-  /// success. lockedUntil blocks login attempts until that timestamp passes.
   failedLoginAttempts Int       @default(0) @map("failed_login_attempts")
   lockedUntil         DateTime? @map("locked_until")
 
@@ -41,11 +28,6 @@ model User {
   @@map("users")
 }
 
-/// Refresh tokens are never stored in plaintext — only a SHA-256 hash, so a
-/// database leak doesn't expose usable tokens (same principle as password
-/// hashing). `familyId` groups all tokens issued from a single login, so
-/// that if a used/expired token is replayed (reuse detection), the entire
-/// family can be revoked at once rather than just the one token.
 model RefreshToken {
   id     String @id @default(uuid()) @db.Uuid
   userId String @map("user_id") @db.Uuid
@@ -63,16 +45,9 @@ model RefreshToken {
   @@map("refresh_tokens")
 }
 
-/// Security-relevant events for incident response and traceability.
-/// Scoped to auth events in Phase 1 — business-workflow actions
-/// (PAPER_SUBMITTED, REVIEWER_ASSIGNED, DECISION_MADE, etc.) are added to
-/// this same enum/table when their owning module is implemented, so
-/// there's a single audit trail rather than one per module.
 model AuditLog {
   id String @id @default(uuid()) @db.Uuid
 
-  /// Null for pre-authentication events, e.g. a failed login for an email
-  /// that may not even correspond to a real account.
   actorId String? @map("actor_id") @db.Uuid
   actor   User?   @relation(fields: [actorId], references: [id], onDelete: SetNull)
 
@@ -100,6 +75,8 @@ model Conference {
   createdById String @map("created_by_id") @db.Uuid
   createdBy   User   @relation(fields: [createdById], references: [id], onDelete: Cascade)
 
+  tracks Track[]
+
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
 
@@ -107,8 +84,22 @@ model Conference {
   @@map("conferences")
 }
 
-/// Extended module-by-module as each business module is implemented.
-/// Phase 1 only defines the auth-related events.
+model Track {
+  id String @id @default(uuid()) @db.Uuid
+
+  conferenceId String     @map("conference_id") @db.Uuid
+  conference   Conference @relation(fields: [conferenceId], references: [id], onDelete: Cascade)
+
+  name        String
+  description String?
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@index([conferenceId])
+  @@map("tracks")
+}
+
 enum AuditAction {
   LOGIN_SUCCESS
   LOGIN_FAILURE
