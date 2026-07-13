@@ -36,6 +36,7 @@ model User {
 
   refreshTokens RefreshToken[]
   auditLogs     AuditLog[]
+  conferences   Conference[]
 
   @@map("users")
 }
@@ -46,9 +47,9 @@ model User {
 /// that if a used/expired token is replayed (reuse detection), the entire
 /// family can be revoked at once rather than just the one token.
 model RefreshToken {
-  id       String @id @default(uuid()) @db.Uuid
-  userId   String @map("user_id") @db.Uuid
-  user     User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  id     String @id @default(uuid()) @db.Uuid
+  userId String @map("user_id") @db.Uuid
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   tokenHash String @unique @map("token_hash")
   familyId  String @map("family_id") @db.Uuid
@@ -86,6 +87,24 @@ model AuditLog {
   @@index([actorId])
   @@index([action])
   @@map("audit_logs")
+}
+
+model Conference {
+  id          String   @id @default(uuid()) @db.Uuid
+  title       String
+  description String?
+  startDate   DateTime @map("start_date")
+  endDate     DateTime @map("end_date")
+  location    String?
+
+  createdById String @map("created_by_id") @db.Uuid
+  createdBy   User   @relation(fields: [createdById], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@index([createdById])
+  @@map("conferences")
 }
 
 /// Extended module-by-module as each business module is implemented.
