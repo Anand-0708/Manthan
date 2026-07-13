@@ -24,6 +24,7 @@ model User {
   refreshTokens RefreshToken[]
   auditLogs     AuditLog[]
   conferences   Conference[]
+  papers        Paper[]
 
   @@map("users")
 }
@@ -93,11 +94,80 @@ model Track {
   name        String
   description String?
 
+  papers Paper[]
+
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
 
   @@index([conferenceId])
   @@map("tracks")
+}
+
+model Paper {
+  id String @id @default(uuid()) @db.Uuid
+
+  title    String
+  abstract String
+  keywords String[]
+
+  trackId String @map("track_id") @db.Uuid
+  track   Track  @relation(fields: [trackId], references: [id], onDelete: Cascade)
+
+  authorId String @map("author_id") @db.Uuid
+  author   User   @relation(fields: [authorId], references: [id], onDelete: Cascade)
+
+  status PaperStatus @default(DRAFT)
+
+  authors  PaperAuthor[]
+  versions PaperVersion[]
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@index([trackId])
+  @@index([authorId])
+  @@map("papers")
+}
+
+model PaperAuthor {
+  id String @id @default(uuid()) @db.Uuid
+
+  paperId String @map("paper_id") @db.Uuid
+  paper   Paper  @relation(fields: [paperId], references: [id], onDelete: Cascade)
+
+  name        String
+  email       String
+  affiliation String?
+
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@index([paperId])
+  @@map("paper_authors")
+}
+
+model PaperVersion {
+  id String @id @default(uuid()) @db.Uuid
+
+  paperId String @map("paper_id") @db.Uuid
+  paper   Paper  @relation(fields: [paperId], references: [id], onDelete: Cascade)
+
+  versionNumber Int @map("version_number")
+
+  fileUrl  String @map("file_url")
+  fileName String @map("file_name")
+
+  uploadedAt DateTime @default(now()) @map("uploaded_at")
+
+  @@index([paperId])
+  @@map("paper_versions")
+}
+
+enum PaperStatus {
+  DRAFT
+  SUBMITTED
+  UNDER_REVIEW
+  ACCEPTED
+  REJECTED
 }
 
 enum AuditAction {
