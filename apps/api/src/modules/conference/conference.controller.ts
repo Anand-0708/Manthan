@@ -15,7 +15,8 @@ export const conferenceController = {
   },
 
   async getAll(_req: Request, res: Response) {
-    const conferences = await conferenceService.getAll();
+    const conferences =
+      await conferenceService.getAll();
 
     res.json({
       success: true,
@@ -23,10 +24,23 @@ export const conferenceController = {
     });
   },
 
+  // ⭐ NEW
+  async list(req: Request, res: Response) {
+    const result =
+      await conferenceService.list(req.query as any);
+
+    res.json({
+      success: true,
+      data: result.conferences,
+      pagination: result.pagination,
+    });
+  },
+
   async getById(req: Request, res: Response) {
-    const conference = await conferenceService.getById(
-      req.params.id!
-    );
+    const conference =
+      await conferenceService.getById(
+        req.params.id!
+      );
 
     res.json({
       success: true,

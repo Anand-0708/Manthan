@@ -3,31 +3,17 @@ import { ACCESS_COOKIE_NAME } from "../utils/cookies";
 import { verifyAccessToken } from "../utils/jwt";
 import { AppError } from "../utils/apiResponse";
 
-declare global {
-  // eslint-disable-next-line @typescript-eslint/no-namespace
-  namespace Express {
-    /**
-     * Passport already defines Request.user?: User.
-     * We only extend the User interface with the fields we actually use.
-     */
-    interface User {
-      id: string;
-    }
-  }
-}
-
-/**
- * Verifies the access token cookie and attaches `req.user`.
- *
- * Stateless by design — this middleware never touches the database.
- * It only checks the JWT signature and expiry.
- */
 export function requireAuth(
   req: Request,
   _res: Response,
   next: NextFunction
 ): void {
-  const token = req.cookies?.[ACCESS_COOKIE_NAME];
+  let token = req.cookies?.[ACCESS_COOKIE_NAME];
+
+  // Support Authorization: Bearer <token>
+  if (!token && req.headers.authorization?.startsWith("Bearer ")) {
+    token = req.headers.authorization.split(" ")[1];
+  }
 
   if (!token) {
     next(
@@ -43,7 +29,6 @@ export function requireAuth(
   try {
     const payload = verifyAccessToken(token);
 
-    // Passport owns req.user, we only populate it.
     req.user = {
       id: payload.sub,
     };

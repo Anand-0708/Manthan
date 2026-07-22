@@ -21,10 +21,13 @@ model User {
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
 
-  refreshTokens RefreshToken[]
-  auditLogs     AuditLog[]
-  conferences   Conference[]
-  papers        Paper[]
+  refreshTokens     RefreshToken[]
+  auditLogs         AuditLog[]
+  conferences       Conference[]
+  papers            Paper[]
+  conferenceRoles   ConferenceRole[]
+  reviewAssignments ReviewAssignment[]
+  reviews           Review[]
 
   @@map("users")
 }
@@ -77,6 +80,7 @@ model Conference {
   createdBy   User   @relation(fields: [createdById], references: [id], onDelete: Cascade)
 
   tracks Track[]
+  roles  ConferenceRole[]
 
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
@@ -118,8 +122,10 @@ model Paper {
 
   status PaperStatus @default(DRAFT)
 
-  authors  PaperAuthor[]
-  versions PaperVersion[]
+  authors     PaperAuthor[]
+  versions    PaperVersion[]
+  assignments ReviewAssignment[]
+  reviews     Review[]
 
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
@@ -177,4 +183,82 @@ enum AuditAction {
   OAUTH_LINKED
   REFRESH_TOKEN_REUSE_DETECTED
   ACCOUNT_LOCKED
+}
+
+model ConferenceRole {
+  id String @id @default(uuid()) @db.Uuid
+
+  conferenceId String     @map("conference_id") @db.Uuid
+  conference   Conference @relation(fields: [conferenceId], references: [id], onDelete: Cascade)
+
+  userId String @map("user_id") @db.Uuid
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  role ConferenceRoleType
+
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@unique([conferenceId, userId, role])
+  @@index([conferenceId])
+  @@index([userId])
+  @@map("conference_roles")
+}
+
+model ReviewAssignment {
+  id String @id @default(uuid()) @db.Uuid
+
+  paperId String @map("paper_id") @db.Uuid
+  paper   Paper  @relation(fields: [paperId], references: [id], onDelete: Cascade)
+
+  reviewerId String @map("reviewer_id") @db.Uuid
+  reviewer   User   @relation(fields: [reviewerId], references: [id], onDelete: Cascade)
+
+  assignedAt DateTime @default(now()) @map("assigned_at")
+
+  review Review?
+
+  @@unique([paperId, reviewerId])
+  @@index([paperId])
+  @@index([reviewerId])
+  @@map("review_assignments")
+}
+
+model Review {
+  id String @id @default(uuid()) @db.Uuid
+
+  assignmentId String           @unique @map("assignment_id") @db.Uuid
+  assignment   ReviewAssignment @relation(fields: [assignmentId], references: [id], onDelete: Cascade)
+
+  reviewerId String @map("reviewer_id") @db.Uuid
+  reviewer   User   @relation(fields: [reviewerId], references: [id], onDelete: Cascade)
+
+  paperId String @map("paper_id") @db.Uuid
+  paper   Paper  @relation(fields: [paperId], references: [id], onDelete: Cascade)
+
+  score      Int
+  strengths  String?
+  weaknesses String?
+  comments   String?
+
+  recommendation ReviewRecommendation
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@index([reviewerId])
+  @@index([paperId])
+  @@map("reviews")
+}
+
+enum ConferenceRoleType {
+  AUTHOR
+  REVIEWER
+  CHAIR
+}
+
+enum ReviewRecommendation {
+  ACCEPT
+  MINOR_REVISION
+  MAJOR_REVISION
+  REJECT
 }

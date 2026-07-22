@@ -21,3 +21,9 @@ export const updatePaperSchema = z.object({
     ])
     .optional(),
 });
+export const updatePaperStatusSchema = z.object({
+  status: z.enum([
+    "ACCEPTED",
+    "REJECTED",
+  ]),
+});

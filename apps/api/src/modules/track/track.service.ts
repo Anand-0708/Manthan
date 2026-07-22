@@ -3,6 +3,7 @@ import { trackRepository } from "./track.repository";
 import type {
   CreateTrackInput,
   UpdateTrackInput,
+  ListTrackQuery,
 } from "./track.types";
 
 export const trackService = {
@@ -22,8 +23,30 @@ export const trackService = {
     );
   },
 
+  async list(query: ListTrackQuery) {
+    const tracks =
+      await trackRepository.list(query);
+
+    const total =
+      await trackRepository.count(query);
+
+    const page = Number(query.page ?? 1);
+    const limit = Number(query.limit ?? 10);
+
+    return {
+      tracks,
+      pagination: {
+        page,
+        limit,
+        total,
+        totalPages: Math.ceil(total / limit),
+      },
+    };
+  },
+
   async getById(id: string) {
-    const track = await trackRepository.findById(id);
+    const track =
+      await trackRepository.findById(id);
 
     if (!track) {
       throw new AppError(

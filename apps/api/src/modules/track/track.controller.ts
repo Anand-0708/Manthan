@@ -29,35 +29,66 @@ export const trackController = {
     });
   },
 
-  async getById(req: Request, res: Response) {
-    const track = await trackService.getById(
+  // ⭐ NEW
+  async list(
+    req: Request,
+    res: Response
+  ) {
+    const result =
+      await trackService.list(
+        req.query as any
+      );
+
+    res.json({
+      success: true,
+      data: result.tracks,
+      pagination: result.pagination,
+    });
+  },
+
+  async getById(
+    req: Request,
+    res: Response
+  ) {
+    const track =
+      await trackService.getById(
+        req.params.id!
+      );
+
+    res.json({
+      success: true,
+      data: track,
+    });
+  },
+
+  async update(
+    req: Request,
+    res: Response
+  ) {
+    const track =
+      await trackService.update(
+        req.params.id!,
+        req.body
+      );
+
+    res.json({
+      success: true,
+      data: track,
+    });
+  },
+
+  async delete(
+    req: Request,
+    res: Response
+  ) {
+    await trackService.delete(
       req.params.id!
     );
 
     res.json({
       success: true,
-      data: track,
-    });
-  },
-
-  async update(req: Request, res: Response) {
-    const track = await trackService.update(
-      req.params.id!,
-      req.body
-    );
-
-    res.json({
-      success: true,
-      data: track,
-    });
-  },
-
-  async delete(req: Request, res: Response) {
-    await trackService.delete(req.params.id!);
-
-    res.json({
-      success: true,
-      message: "Track deleted successfully",
+      message:
+        "Track deleted successfully",
     });
   },
 };

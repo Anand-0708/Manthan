@@ -8,6 +8,7 @@ import { sha256 } from "../../common/utils/tokenHash";
 import { authRepository } from "./auth.repository";
 import { toSafeUser, type GoogleProfileInput, type SafeUser } from "./auth.types";
 import type { LoginInput, RegisterInput } from "./auth.validators";
+import { emailService } from "../email/email.service";
 
 export interface AuthResult {
   user: SafeUser;
@@ -49,17 +50,28 @@ export const authService = {
       );
     }
 
-    const passwordHash = await hashPassword(input.password);
-    const user = await authRepository.createUser({
-      email: input.email,
-      passwordHash,
-      name: input.name,
-      affiliation: input.affiliation,
-    });
+const passwordHash = await hashPassword(input.password);
 
-    const tokens = await issueTokens(user.id);
-    return { user: toSafeUser(user), ...tokens };
-  },
+const user = await authRepository.createUser({
+  email: input.email,
+  passwordHash,
+  name: input.name,
+  affiliation: input.affiliation,
+});
+
+// Send Welcome Email
+await emailService.sendWelcomeEmail(
+  user.email,
+  user.name
+);
+
+const tokens = await issueTokens(user.id);
+
+return {
+  user: toSafeUser(user),
+  ...tokens,
+};
+},
 
   async login(input: LoginInput): Promise<AuthResult> {
     const user = await authRepository.findUserByEmail(input.email);

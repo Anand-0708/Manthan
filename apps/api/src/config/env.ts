@@ -1,3 +1,4 @@
+import "dotenv/config";
 import { z } from "zod";
 
 /**
@@ -32,9 +33,6 @@ const envSchema = z.object({
   // staging/production.
   COOKIE_SECURE: z.coerce.boolean().default(false),
 
-  // --- CSRF ---
-  CSRF_SECRET: z.string().min(32, "CSRF_SECRET must be at least 32 characters"),
-
   // --- Auth: Google OAuth ---
   GOOGLE_CLIENT_ID: z.string().optional(),
   GOOGLE_CLIENT_SECRET: z.string().optional(),
@@ -46,6 +44,14 @@ const envSchema = z.object({
 
   // --- Frontend URL (post-OAuth redirect target) ---
   WEB_URL: z.string().default("http://localhost:3000"),
+  // --- Email / SMTP ---
+SMTP_HOST: z.string().default("smtp.gmail.com"),
+SMTP_PORT: z.coerce.number().int().positive().default(587),
+SMTP_USER: z.string().optional(),
+SMTP_PASS: z.string().optional(),
+SMTP_FROM: z.string().default(
+  "Manthan Conference <noreply@manthan.com>"
+),
 });
 
 export type Env = z.infer<typeof envSchema>;
