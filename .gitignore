@@ -1,28 +1,109 @@
+# =========================
 # Dependencies
+# =========================
 node_modules/
+.pnpm-store/
+.npm/
+.yarn/
+.yarn-cache/
 
+# =========================
 # Build outputs
+# =========================
 dist/
+build/
 .next/
+out/
 .turbo/
 coverage/
-
-# Environment files
-.env
-.env.local
-.env.*.local
-
-# TypeScript
 *.tsbuildinfo
 
-# Logs
-*.log
+# =========================
+# Environment & Secrets
+# =========================
+.env
+.env.*
+!.env.example
+!.env.test.example
 
-# OS files
-.DS_Store
-Thumbs.db
-# Generated JS from TS source
+# =========================
+# Logs
+# =========================
+logs/
+*.log
+npm-debug.log*
+pnpm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# =========================
+# Runtime files
+# =========================
+*.pid
+*.pid.lock
+*.seed
+
+# =========================
+# Uploaded files
+# =========================
+apps/api/uploads/*
+!apps/api/uploads/.gitkeep
+
+# =========================
+# Generated JS from TS
+# =========================
 apps/api/src/**/*.js
 apps/api/src/**/*.js.map
 apps/api/tests/**/*.js
 apps/api/tests/**/*.js.map
+
+# =========================
+# Prisma
+# =========================
+prisma/dev.db
+prisma/dev.db-journal
+apps/api/prisma/dev.db
+apps/api/prisma/dev.db-journal
+
+# =========================
+# Docker
+# =========================
+docker-data/
+postgres-data/
+*.tar
+
+# =========================
+# IDE
+# =========================
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# =========================
+# OS files
+# =========================
+.DS_Store
+Thumbs.db
+Desktop.ini
+
+# =========================
+# Temporary files
+# =========================
+tmp/
+temp/
+.cache/
+.eslintcache
+
+# =========================
+# Test outputs
+# =========================
+playwright-report/
+test-results/
+
+# =========================
+# Misc
+# =========================
+*.bak
+*.old
+*.orig
